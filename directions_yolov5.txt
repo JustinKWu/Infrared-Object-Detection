@@ -1,0 +1,542 @@
+
+Tasks:
+1. Train the baseline network on any desktop or laptop computer, and assess its performance on the test set. This will serve as your baseline performance for accuracy.
+2. Implement the test code on the Xavier processor, and obtain the performance accuracy as well as the time required to process the test images
+3. 
+	A. Optimize the trained network model such that the processing time is decreased by a factor of two. 
+	   What is the resulting performance accuracy? What is the equivalent frames/second (FPS)?
+	B. What accuracy can you achieve if the system must operate at 10 FPS?
+4. Characterize the power consumption as a function of FPS and accuracy..
+
+GIT Repo:
+Yolov5 (https://github.com/ultralytics/yolov5)
+Infared-Object-Detection (https://github.com/Wutang123/Infrared-Object-Detection)
+
+Image Sizes:
+1. 224x224 (224/32 = 7)
+2. 448x448 (448/32 = 14)
+3. 640x640 (640/32 = 20)
+
+Hyperparamters:
+- hyp.scratch.yaml
+------------------------------Commands to use:--------------------------
+
+Training (PC)
+python .train.py --weights yolov5s.pt --data .\data\flir.yaml --epoch 100 --batch-size 16 --workers 4 --img-size 224
+python .train.py --weights yolov5s.pt --data .\data\flir.yaml --epoch 100 --batch-size 16 --workers 4 --img-size 448
+python .train.py --weights yolov5s.pt --data .\data\flir.yaml --epoch 100 --batch-size 16 --workers 4 --img-size 640
+
+
+
+Testing (PC)
+python val.py --weights .\runs\train\exp\weights\best.pt --data .\data\flir.yaml --batch-size 16 --img-size 224
+python val.py --weights .\runs\train\exp\weights\best.pt --data .\data\flir.yaml --batch-size 16 --img-size 224 --half
+python val.py --weights .\runs\train\exp2\weights\best.pt --data .\data\flir.yaml --batch-size 16 --img-size 448
+python val.py --weights .\runs\train\exp2\weights\best.pt --data .\data\flir.yaml --batch-size 16 --img-size 448 --half
+python val.py --weights .\runs\train\exp3\weights\best.pt --data .\data\flir.yaml --batch-size 16 --img-size 640
+python val.py --weights .\runs\train\exp3\weights\best.pt --data .\data\flir.yaml --batch-size 16 --img-size 640 --half
+
+Testing(Xavier)
+python3 val.py --weights pt/exp/best.pt --data data/flir.yaml --batch-size 16 --img-size 224
+python3 val.py --weights pt/exp/best.pt --data data/flir.yaml --batch-size 16 --img-size 224 --half
+python3 val.py --weights pt/exp2/best.pt --data data/flir.yaml --batch-size 16 --img-size 448
+python3 val.py --weights pt/exp2/best.pt --data data/flir.yaml --batch-size 16 --img-size 448 --half
+python3 val.py --weights pt/exp3/best.pt --data data/flir.yaml --batch-size 16 --img-size 640
+python3 val.py --weights pt/exp3/best.pt --data data/flir.yaml --batch-size 16 --img-size 640 --half
+
+
+
+Detect (PC)
+python detect.py --weights .\runs\train\exp\weights\best.pt --source .\data\flir\images\test --img-size 224
+python detect.py --weights .\runs\train\exp\weights\best.pt --source .\data\flir\images\test --img-size 224 --half
+python detect.py --weights .\runs\train\exp2\weights\best.pt --source .\data\flir\images\test --img-size 448
+python detect.py --weights .\runs\train\exp2\weights\best.pt --source .\data\flir\images\test --img-size 448 --half
+python detect.py --weights .\runs\train\exp3\weights\best.pt --source .\data\flir\images\test --img-size 640
+python detect.py --weights .\runs\train\exp3\weights\best.pt --source .\data\flir\images\test --img-size 640 --half
+
+Detect (Xavier)
+python3 detect.py --weights pt/exp/best.pt --source data/flir/images/test/ --img-size 224
+python3 detect.py --weights pt/exp/best.pt --source data/flir/images/test/ --img-size 224 --half
+python3 detect.py --weights pt/exp2/best.pt --source data/flir/images/test/ --img-size 448
+python3 detect.py --weights pt/exp2/best.pt --source data/flir/images/test/ --img-size 448 --half
+python3 detect.py --weights pt/exp3/best.pt --source data/flir/images/test/ --img-size 640
+python3 detect.py --weights pt/exp3/best.pt --source data/flir/images/test/ --img-size 640 --half
+
+
+
+TensorRT (Xavier) (See https://github.com/wang-xinyu/tensorrtx/tree/master/yolov5 for more directions)
+(yolov5 directory)
+python3 gen_wts.py -w pt/exp/best.pt -o best1.wts # Generates the .pt to .wts
+python3 gen_wts.py -w pt/exp2/best.pt -o best2.wts # Generates the .pt to .wts
+python3 gen_wts.py -w pt/exp3/best.pt -o best3.wts # Generates the .pt to .wts
+
+(tensorrtx/yolov5 directory)
+Verify the images size in yololayer.h matches the one you're going to test
+Verify Use_FP16/Use_FP32 is set in yolov5.cpp (FP32 first then FP16)
+
+(tensorrtx/yolov5/build directory)
+make
+sudo ./yolov5 -s best1.wts best1.engine s
+sudo ./yolov5 -s best1.wts best2.engine s
+sudo ./yolov5 -s best1.wts best3.engine s
+
+(../samples should have all the images from .\data\flir\images\test)
+(Test FP32 first the FP16 - Need to do make whenever you change the .cpp or .h file) (Copy all the inference times in a .csv file) (Average the times) (Record value)
+sudo ./yolov5 -d best1.engine ../samples
+sudo ./yolov5 -d best2.engine ../samples
+sudo ./yolov5 -d best3.engine ../samples
+
+Plots
+python
+from utils.plots import plot_results 
+plot_results(save_dir='runs/train/exp')  # plot results.txt as results.png
+
+------------------------------train.py--------------------------
+Training (PC) exp
+- 224 by 224
+- 100 epochs
+- yolov5s
+- batch 16
+- workers 4
+- hyper.scratch.yaml
+- 8 bit unannotated flir 
+-  hours 
+- 283 layers
+- 7276605 parameters
+- 7276605 gradients
+- 17.1 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95:
+
+Training (PC) exp2
+- 448 by 448
+- 100 epochs
+- yolov5s
+- batch 16
+- workers 4
+- hyper.scratch.yaml
+- 8 bit unannotated flir 
+- hours 
+- 283 layers
+- 7276605 parameters
+- 7276605 gradients
+- 17.1 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95:
+	   
+Training (PC) exp3
+- 640 by 640
+- 100 epochs
+- yolov5s
+- batch 16
+- workers 4
+- hyper.scratch.yaml
+- 8 bit unannotated flir 
+-  hours 
+- 283 layers
+- 7276605 parameters
+- 7276605 gradients
+- 17.1 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95:
+
+			   
+------------------------------val.py:--------------------------
+
+############## 224 x 224 ##############
+Test(PC) exp
+- exp\weights\best.pt
+- 224 by 224
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 224x224 image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 
+
+Test(PC) exp2
+- exp\weights\best.pt
+- --half
+- 224 by 224
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 224x224 image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 
+
+Test(Xavier) exp
+- pt/exp/best.pt
+- 224 by 224
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 224x224 image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95:
+
+Test(Xavier) exp2
+- pt/exp/best.pt
+- --half
+- 224 by 224
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 224x224 image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95:
+  
+  
+############## 448 x 448 ##############
+Test(PC) exp3
+- exp2\weights\best.pt
+- 448 by 448
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 448x448 image at shape (16,3,448,448)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 
+
+Test(PC) exp4
+- exp2\weights\best.pt
+- --half
+- 448 by 448
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 448x448 image at shape (16,3,448,448)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 
+
+Test(Xavier) exp3
+- pt/exp2/best.pt
+- 448 by 448
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 448x448 image at shape (16,3,448,448)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95:
+
+Test(Xavier) exp4
+- pt/exp2/best.pt
+- --half
+- 448 by 448
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 448x448 image at shape (16,3,448,448)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95:
+
+
+############## 640 x 640 ##############
+Test(PC) exp5
+- exp3\weights\best.pt
+- 640 by 640
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 640x640 image at shape (16,3,640,640)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 
+
+Test(PC) exp6
+- exp3\weights\best.pt
+- --half
+- 640 by 640
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 640x640 image at shape (16,3,640,640)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 
+
+Test(Xavier) exp5
+- pt/exp3/best.pt
+- 640 by 640
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 640x640 image at shape (16,3,640,640)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95:
+
+Test(Xavier) exp6
+- pt/exp3/best.pt
+- --half
+- 640 by 640
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 640x640 image at shape (16,3,640,640)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95:
+			 
+------------------------------detect.py:--------------------------
+
+############## 224 x 224 ##############
+Detect(PC) exp
+- exp\weights\best.pt
+- 224 by 224
+- yolov5s
+- 8 bit unannotated flir (test dataset)
+- Pre-process: ms
+- Inference: ms 
+-  ms NMS per 224x224 image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+Detect(PC) exp2
+- exp\weights\best.pt
+- --half
+- 224 by 224
+- yolov5s
+- 8 bit unannotated flir (test dataset)
+- Pre-process: ms
+- Inference: ms 
+-  ms NMS per 224x224 image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+Detect(Xavier) exp
+- pt/exp/best.pt
+- 224 by 224
+- yolov5s
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference: ms 
+-  ms NMS per 224x224 image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+Detect(Xavier) exp2
+- pt/exp/best.pt
+- --half
+- 224 by 224
+- yolov5s
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 224x224 image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+
+############## 448 x 448 ##############
+Detect(PC) exp3
+- exp2\weights\best.pt
+- 448 by 448
+- yolov5s
+- 8 bit unannotated flir (test dataset)
+- Pre-process: ms
+- Inference: ms 
+-  ms NMS per 448x448 image at shape (16,3,448,448)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+Detect(PC) exp4
+- exp2\weights\best.pt
+- --half
+- 448 by 448
+- yolov5s
+- 8 bit unannotated flir (test dataset)
+- Pre-process: ms
+- Inference: ms 
+-  ms NMS per 448x448 image at shape (16,3,448,448)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+Detect(Xavier) exp4
+- pt/exp2/best.pt
+- 448 by 448
+- yolov5s
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference: ms 
+-  ms NMS per 448x448 image at shape (16,3,448,448)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+Detect(Xavier) exp5
+- pt/exp2/best.pt
+- --half
+- 448 by 448
+- yolov5s
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 448x448 image at shape (16,3,448,448)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+
+############## 640 x 640 ##############
+Detect(PC) exp5
+- exp3\weights\best.pt
+- 640 by 640
+- yolov5s
+- 8 bit unannotated flir (test dataset)
+- Pre-process: ms
+- Inference: ms 
+-  ms NMS per 640x640 image at shape (16,3,640,640)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+Detect(PC) exp6
+- exp3\weights\best.pt
+- --half
+- 640 by 640
+- yolov5s
+- 8 bit unannotated flir (test dataset)
+- Pre-process: ms
+- Inference: ms 
+-  ms NMS per 640x640 image at shape (16,3,640,640)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+Detect(Xavier) exp5
+- pt/exp3/best.pt
+- 640 by 640
+- yolov5s
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference: ms 
+-  ms NMS per 640x640 image at shape (16,3,640,640)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+Detect(Xavier) exp6
+- pt/exp3/best.pt
+- --half
+- 640 by 640
+- yolov5s
+- 8 bit unannotated flir (test dataset)
+- Pre-process:  ms
+- Inference:  ms 
+-  ms NMS per 640x640 image at shape (16,3,640,640)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+------------------------------TensorRT:--------------------------
+############## 224 x 224 ##############
+TensorRT (Xavier)
+- pt/exp/best.pt (best1.wts)
+- 8 bit unannotated flir (test dataset)
+- FP32
+- Average:  ms
+
+TensorRT (Xavier)
+- pt/exp/best.pt (best1.wts)
+- 8 bit unannotated flir (test dataset)
+- FP16
+- Average:  ms
+
+
+############## 448 x 448 ##############
+TensorRT (Xavier)
+- pt/exp2/best.pt (best2.wts)
+- 8 bit unannotated flir (test dataset)
+- FP32
+- Average:  ms
+
+TensorRT (Xavier)
+- pt/exp2/best.pt (best2.wts)
+- 8 bit unannotated flir (test dataset)
+- FP16
+- Average:  ms
+
+############## 640 x 640 ##############
+TensorRT (Xavier)
+- pt/exp3/best.pt (best3.wts)
+- 8 bit unannotated flir (test dataset)
+- FP32
+- Average:  ms
+
+TensorRT (Xavier)
+- pt/exp3/best.pt (best3.wts)
+- 8 bit unannotated flir (test dataset)
+- FP16
+- Average:  ms

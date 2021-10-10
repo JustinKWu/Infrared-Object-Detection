@@ -339,7 +339,8 @@ def main(opt):
 
     elif opt.task == 'study':  # run over a range of settings and save/plot
         # python val.py --task study --data coco.yaml --iou 0.7 --weights yolov5s.pt yolov5m.pt yolov5l.pt yolov5x.pt
-        x = list(range(256, 1536 + 128, 128))  # x axis (image sizes)
+        # x = list(range(256, 1536 + 128, 128))  # x axis (image sizes)
+        x = list(range(224, 640, 32))  # x axis (image sizes)
         for w in opt.weights if isinstance(opt.weights, list) else [opt.weights]:
             f = f'study_{Path(opt.data).stem}_{Path(w).stem}.txt'  # filename to save to
             y = []  # y axis

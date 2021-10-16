@@ -1,0 +1,230 @@
+
+Tasks:
+1. Train the baseline network on any desktop or laptop computer, and assess its performance on the test set. This will serve as your baseline performance for accuracy.
+2. Implement the test code on the Xavier processor, and obtain the performance accuracy as well as the time required to process the test images
+3. 
+	A. Optimize the trained network model such that the processing time is decreased by a factor of two. 
+	   What is the resulting performance accuracy? What is the equivalent frames/second (FPS)?
+	B. What accuracy can you achieve if the system must operate at 10 FPS?
+4. Characterize the power consumption as a function of FPS and accuracy..
+
+Comparitive Study:
+- Take 640 by 640 (or 448 by 448) trained model and test it using a smaller image size like 448 by 448 (or 224 by 224)
+
+GIT Repo:
+Yolov5 (https://github.com/ultralytics/yolov5)
+Infared-Object-Detection (https://github.com/Wutang123/Infrared-Object-Detection)
+
+Image Sizes:
+1. 224x224 (224/32 = 7)
+2. 448x448 (448/32 = 14)
+3. 640x640 (640/32 = 20)
+
+Hyperparamters:
+- hyp.scratch.yaml
+
+------------------------------Commands to use:--------------------------
+
+Training (PC)
+python train.py --weights yolov5s.pt --data .\data\flir.yaml --epoch 100 --batch-size 16 --workers 4 --img-size 224
+python train.py --weights yolov5s.pt --data .\data\flir.yaml --epoch 100 --batch-size 16 --workers 4 --img-size 448
+python train.py --weights yolov5s.pt --data .\data\flir.yaml --epoch 100 --batch-size 16 --workers 4 --img-size 640
+python train.py --weights yolov5m.pt --data .\data\flir.yaml --epoch 100 --batch-size 16 --workers 2 --img-size 640
+python train.py --weights yolov5l.pt --data .\data\flir.yaml --epoch 100 --batch-size 8 --workers 1 --img-size 640
+
+Testing (PC)
+python val.py --weights .\runs\train\exp\weights\best.pt --data .\data\flir.yaml --batch-size 16 --img-size 224
+python val.py --weights .\runs\train\exp2\weights\best.pt --data .\data\flir.yaml --batch-size 16 --img-size 448
+python val.py --weights .\runs\train\exp3\weights\best.pt --data .\data\flir.yaml --batch-size 16 --img-size 640
+python val.py --weights .\runs\train\exp4\weights\best.pt --data .\data\flir.yaml --batch-size 16 --img-size 640
+python val.py --weights .\runs\train\exp5\weights\best.pt --data .\data\flir.yaml --batch-size 16 --img-size 640
+
+------------------------------train.py--------------------------
+Training (PC) exp ***DONE***
+- 224 by 224
+- 100 epochs
+- yolov5s
+- batch 16
+- workers 4
+- hyper.scratch.yaml
+- 8 bit unannotated flir 
+- 1.081 hours 
+- 283 layers
+- 7276605 parameters
+- 7276605 gradients
+- 17.1 GFLOPs
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.587      0.361      0.345      0.155
+person    1363       5014      0.728      0.424      0.502      0.196
+bicycle   1363       350       0.471      0.289      0.231      0.087
+car       1363       4247      0.65       0.656      0.57       0.331
+dog       1363       13        0.5        0.0769     0.0763     0.00773
+
+
+Training (PC) exp2 ***DONE***
+- 448 by 448
+- 100 epochs
+- yolov5s
+- batch 16
+- workers 4
+- hyper.scratch.yaml
+- 8 bit unannotated flir 
+- 1.853 hours 
+- 283 layers
+- 7276605 parameters
+- 7276605 gradients
+- 17.1 GFLOPs
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.639      0.56       0.522      0.268
+person    1363       5014      0.763      0.665      0.716      0.347
+bicycle   1363       350       0.601      0.525      0.418      0.157
+car       1363       4247      0.69       0.821      0.697      0.448
+dog       1363       13        0.502      0.231      0.259      0.122
+
+Training (PC) exp3 ***DONE***
+- 640 by 640
+- 100 epochs
+- yolov5s
+- batch 16
+- workers 
+- hyper.scratch.yaml
+- 8 bit unannotated flir 
+- 2.844 hours 
+- 283 layers
+- 7276605 parameters
+- 7276605 gradients
+- 17.1 GFLOPs
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.661      0.598      0.527       0.27
+person    1363       5014      0.733      0.734      0.737      0.359
+bicycle   1363       350       0.533      0.569      0.432      0.164
+car       1363       4247      0.638      0.866      0.707      0.451
+dog       1363       13        0.741      0.223      0.231      0.104
+
+Training (PC) exp4 ***DONE***
+- 640 by 640
+- 100 epochs
+- yolov5m
+- batch 16
+- workers 2
+- hyper.scratch.yaml
+- 8 bit unannotated flir 
+- 6.060 hours 
+- 391 layers
+- 21379686 parameters
+- 21379686 gradients
+- 51.4 GFLOPs
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.602      0.571      0.509      0.289
+person    1363       5014      0.755      0.767      0.762      0.4
+bicycle   1363       350       0.515      0.5        0.388      0.142
+car       1363       4247      0.67       0.863      0.707      0.472
+dog       1363       13        0.466      0.154      0.179      0.142
+
+Training (PC) exp5 ***DONE***
+- 640 by 640
+- 100 epochs
+- yolov5l
+- batch 16
+- workers 1
+- hyper.scratch.yaml
+- 8 bit unannotated flir 
+- 8.661 hours 
+- 499 layers
+- 47062150 parameters
+- 47062150 gradients
+- 115.6 GFLOPs
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.587      0.608      0.539      0.296
+person    1363       5014      0.755      0.766      0.773      0.407
+bicycle   1363       350       0.563      0.571      0.439      0.174
+car       1363       4247      0.687      0.865      0.721      0.479
+dog       1363       13        0.345      0.231      0.225      0.122
+
+------------------------------val.py:--------------------------
+
+############## Model 1 ##############
+Test(PC) exp ***DONE***
+- exp\weights\best.pt
+- 224 by 224
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.0 ms
+- Inference: 0.8 ms 
+- 1.2 ms NMS per image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.585      0.361      0.345      0.156
+
+
+############## Model 2 ##############
+Test(PC) exp2 ***DONE***
+- exp2\weights\best.pt
+- 448 by 448
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.1 ms
+- Inference: 2.1 ms 
+- 1.0 ms NMS per image at shape (16,3,448,448)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.637       0.56      0.524       0.27
+
+############## Model 3 ##############
+Test(PC) exp3 ***DONE***
+- exp3\weights\best.pt
+- 640 by 640
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.1 ms
+- Inference: 3.9 ms 
+- 1.2 ms NMS per image at shape (16,3,640,640)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOP
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.658      0.602      0.528       0.27
+
+############## Model 4 ##############
+Test(PC) exp4 ***DONE***
+- exp4\weights\best.pt
+- 640 by 640
+- yolov5l
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.1 ms
+- Inference: 9.1 ms 
+- 1.1 ms NMS per image at shape (16,3,640,640)
+- 308 layers
+- 21360918 parameters
+- 0 gradients
+- 51.3 GFLOP
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.6        0.571     0.508       0.288 
+
+############## Model 5 ##############
+Test(PC) exp5 ***DONE***
+- exp5\weights\best.pt
+- 640 by 640
+- yolov5l
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.1 ms
+- Inference: 13.6 ms 
+- 1.2 ms NMS per image at shape (16,3,640,640)
+- 392 layers
+- 47031366 parameters
+- 0 gradients
+- 115.5 GFLOP
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.587      0.609      0.545      0.295

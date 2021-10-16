@@ -1,0 +1,347 @@
+
+Tasks:
+1. Train the baseline network on any desktop or laptop computer, and assess its performance on the test set. This will serve as your baseline performance for accuracy.
+2. Implement the test code on the Xavier processor, and obtain the performance accuracy as well as the time required to process the test images
+3. 
+	A. Optimize the trained network model such that the processing time is decreased by a factor of two. 
+	   What is the resulting performance accuracy? What is the equivalent frames/second (FPS)?
+	B. What accuracy can you achieve if the system must operate at 10 FPS?
+4. Characterize the power consumption as a function of FPS and accuracy..
+
+Comparitive Study:
+- Take 640 by 640 (or 448 by 448) trained model and test it using a smaller image size like 448 by 448 (or 224 by 224)
+
+GIT Repo:
+Yolov5 (https://github.com/ultralytics/yolov5)
+Infared-Object-Detection (https://github.com/Wutang123/Infrared-Object-Detection)
+
+Image Sizes:
+1. 224x224 (224/32 = 7)
+2. 448x448 (448/32 = 14)
+3. 640x640 (640/32 = 20)
+
+Hyperparamters:
+- hyp.scratch.yaml
+
+Baseline Average Power Consumption: 
+- ALL: 2765 mW
+------------------------------Commands to use:--------------------------
+Testing(Xavier)
+python3 val.py --weights pt/exp/best.pt --data data/flir.yaml --batch-size 16 --img-size 224
+python3 val.py --weights pt/exp2/best.pt --data data/flir.yaml --batch-size 16 --img-size 448
+python3 val.py --weights pt/exp3/best.pt --data data/flir.yaml --batch-size 16 --img-size 640
+python3 val.py --weights pt/exp4/best.pt --data data/flir.yaml --batch-size 16 --img-size 640
+python3 val.py --weights pt/exp5/best.pt --data data/flir.yaml --batch-size 16 --img-size 640
+
+Detect (Xavier)
+python3 detect.py --weights pt/exp3/best.pt --source data/flir/FLIR.mp4 --img-size 640 
+
+TensorRT (Xavier) (See https://github.com/wang-xinyu/tensorrtx/tree/master/yolov5 for more directions)
+- yolov5 directory
+- Generates the .pt to .wts
+python3 gen_wts.py -w pt/exp/best.pt -o pt/exp/best1.wts
+python3 gen_wts.py -w pt/exp2/best.pt -o pt/exp2/best2.wts
+python3 gen_wts.py -w pt/exp3/best.pt -o pt/exp3/best3.wts
+python3 gen_wts.py -w pt/exp4/best.pt -o pt/exp3/best4.wts
+python3 gen_wts.py -w pt/exp5/best.pt -o pt/exp3/best5.wts
+cp pt/exp/best1.wts ../tensorrtx/yolov5/build
+cp pt/exp2/best2.wts ../tensorrtx/yolov5/build
+cp pt/exp3/best3.wts ../tensorrtx/yolov5/build
+cp pt/exp3/best4.wts ../tensorrtx/yolov5/build
+cp pt/exp3/best5.wts ../tensorrtx/yolov5/build
+
+- tensorrtx/yolov5 directory
+- Verify the images size in yololayer.h matches the one you're going to test
+- Verify Use_FP16/Use_FP32 is set in yolov5.cpp (FP32 first then FP16)
+
+- tensorrtx/yolov5/build directory
+make
+sudo ./yolov5 -s best1.wts best1.engine s
+sudo ./yolov5 -s best2.wts best2.engine s
+sudo ./yolov5 -s best3.wts best3.engine s
+
+- ../samples should have all the images from .\data\flir\images\test
+- Test FP32 first the FP16, *****Need to do make whenever you change the .cpp or .h file*****
+- Copy all the inference times in a .csv file
+- Average the times
+- Record value
+sudo ./yolov5 -d best1.engine ../samples
+sudo ./yolov5 -d best2.engine ../samples
+sudo ./yolov5 -d best3.engine ../samples
+
+- Move all the generated files to (runs/tensorrt/exp*/)
+mv _FLIR_* runs/tensorrt/exp*/
+
+Plots
+python
+from utils.plots import plot_results 
+plot_results(save_dir='runs/train/exp')
+
+------------------------------val.py:--------------------------
+
+############## Model 1 ##############
+Test(Xavier) exp ***DONE***
+- pt/exp/best.pt
+- 224 by 224
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.1 ms
+- Inference:  9.8 ms 
+- 4.1 ms NMS per image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+- Average Power Consumption:
+	- ALL: 	       7500  mW
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.588      0.361      0.345      0.156
+
+############## Model 2 ##############
+Test(Xavier) exp2 ***DONE***
+- pt/exp2/best.pt
+- 448 by 448
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.3 ms
+- Inference: 26.6 ms 
+- 4.3 ms NMS per image at shape (16,3,448,448)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+- Average Power Consumption:
+	- ALL: 	       8000  mW
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.639       0.56      0.524       0.27
+
+############## Model 3 ##############
+Test(Xavier) exp3 ***DONE***
+- pt/exp3/best.pt
+- 640 by 640
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.5 ms
+- Inference: 52.0 ms 
+- 4.9 ms NMS per image at shape (16,3,640,640)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+- Average Power Consumption:
+	- ALL: 	        8600 mW
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.658      0.602      0.528       0.27
+
+############## Model 4 ##############
+Test(Xavier) exp4 ***DONE***
+- pt/exp4/best.pt
+- 640 by 640
+- yolov5l
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.5 ms
+- Inference: 130.3 ms 
+- 5.2 ms NMS per image at shape (16,3,640,640)
+- 308 layers
+- 21360918 parameters
+- 0 gradients
+- 51.3 GFLOP
+- Average Power Consumption:
+	- ALL: 	        8800 mW
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.599      0.571      0.508      0.288
+
+############## Model 5 ##############
+Test(Xavier) exp5 ***DONE***
+- pt/exp5/best.pt
+- 640 by 640
+- yolov5l
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.5 ms
+- Inference: 225.8 ms 
+- 5.8 ms NMS per image at shape (16,3,640,640)
+- 392 layers
+- 47031366 parameters
+- 0 gradients
+- 115.5 GFLOP
+- Average Power Consumption:
+	- ALL: 	        9000 mW
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.587      0.609      0.545      0.295
+
+
+==================================OPTIMIZER=======================================
+Test(Xavier) exp6 ***DONE***
+- pt/exp3/best.pt
+- --half
+- 640 by 640
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.4 ms
+- Inference: 31.3 ms 
+- 5.5 ms NMS per image at shape (16,3,640,640)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+- Average Power Consumption:
+	- ALL: 	        8500 mW
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.658      0.603      0.528       0.27
+
+Test(Xavier) exp7 ***DONE***
+- pt/exp3/best.pt
+- 448 by 448
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.3 ms
+- Inference: 26.6 ms 
+- 6.3 ms NMS per image at shape (16,3,448,448)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+- Average Power Consumption:
+	- ALL: 	        8400 mW
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.484       0.48      0.447      0.224
+
+Test(Xavier) exp8 ***DONE***
+- pt/exp3/best.pt
+- --half
+- 448 by 448
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.2 ms
+- Inference: 16.3 ms 
+- 6.1 ms NMS per image at shape (16,3,448,448)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+- Average Power Consumption:
+	- ALL: 	        8000 mW
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624       0.481       0.48      0.445      0.223
+
+Test(Xavier) exp9 ***DONE***
+- pt/exp3/best.pt
+- 224 by 224
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.1 ms
+- Inference: 10.4 ms 
+- 3.8 ms NMS per image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+- Average Power Consumption:
+	- ALL: 	        7700 mW
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624      0.433       0.34      0.281      0.124
+
+Test(Xavier) exp10 ***DONE***
+- pt/exp3/best.pt
+- --half
+- 224 by 224
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 0.1 ms
+- Inference: 7.1 ms 
+- 3.6 ms NMS per image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+- Average Power Consumption:
+	- ALL: 	        7000 mW
+Class     Images     Labels      P          R        mAP@.5   mAP@.5:.95
+all       1363       9624       0.433       0.34      0.281      0.124
+==================================         =======================================
+
+------------------------------detect.py:--------------------------
+Detect(Xavier) exp ***DONE***
+- pt/exp3/best.pt
+- 640 by 640
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 1.4 ms
+- Inference: 47.3 ms 
+- 3.6 ms NMS per image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+Detect(Xavier) exp2 ***DONE***
+- pt/exp3/best.pt
+- --half
+- 640 by 640
+- yolov5s
+- batch 16
+- 8 bit unannotated flir (test dataset)
+- Pre-process: 1.4 ms
+- Inference: 40.8 ms 
+- 2.9 ms NMS per image at shape (16,3,224,224)
+- 224 layers
+- 7266973 parameters
+- 0 gradients
+- 17.0 GFLOPs
+
+------------------------------TensorRT:--------------------------
+############## Model 3 ##############
+TensorRT (Xavier) exp ***DONE***
+- pt/exp3/best.pt (best3.wts)
+- runs/tensorrt/exp/
+- 8 bit unannotated flir (test dataset)
+- FP32
+- Average: 56.09 ms
+
+TensorRT (Xavier) exp2 ***DONE***
+- pt/exp3/best.pt (best3.wts)
+- runs/tensorrt/exp2/
+- 8 bit unannotated flir (test dataset)
+- FP16
+- Average: 21.76 ms
+
+TensorRT (Xavier) exp3 ***DONE***
+- pt/exp3/best.pt (best3.wts)
+- runs/tensorrt/exp3/
+- 8 bit unannotated flir (test dataset)
+- FP32
+- Average: 22.17 ms
+
+TensorRT (Xavier) exp4 ***DONE***
+- pt/exp3/best.pt (best3.wts)
+- runs/tensorrt/exp4/
+- 8 bit unannotated flir (test dataset)
+- FP16
+- Average: 23.03 ms
+
+TensorRT (Xavier) exp5 ***DONE***
+- pt/exp3/best.pt (best3.wts)
+- runs/tensorrt/exp5/
+- 8 bit unannotated flir (test dataset)
+- FP32
+- Average:  ms
+
+TensorRT (Xavier) exp6 ***DONE***
+- pt/exp3/best.pt (best3.wts)
+- runs/tensorrt/exp6/
+- 8 bit unannotated flir (test dataset)
+- FP16
+- Average:  ms
+
+
